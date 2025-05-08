@@ -3,9 +3,14 @@ const express = require("express");
 const mysql = require("mysql2");
 const app = express();
 const PORT = 5000;
+const authRoutes = require('./routes/authRoutes');
+
 
 // Middleware
 app.use(express.json());
+
+app.use(express.json());
+app.use('/api', authRoutes);
 
 // Database Connection
 const db = mysql.createConnection({
@@ -33,3 +38,7 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+  });
