@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 // Koneksi Database
@@ -37,5 +38,49 @@ const registerUser = (req, res) => {
     });
   });
 };
+// Login User
+const loginUser = (req, res) => {
+  const { Email, Password } = req.body;
 
-module.exports = { registerUser };
+  // Cek apakah user ada di database
+  const query = `SELECT * FROM user WHERE Email = ?`;
+  db.query(query, [Email], (err, results) => {
+    if (err) return res.status(500).json({ message: "Database error", error: err });
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = results[0];
+
+    // Bandingkan password
+    bcrypt.compare(Password, user.Password, (err, isMatch) => {
+      if (err) return res.status(500).json({ message: "Error comparing passwords", error: err });
+
+      if (!isMatch) {
+        return res.status(401).json({ message: "Password is incorrect" });
+      }
+
+      // Generate Token
+      const token = jwt.sign(
+        {
+          userId: user.ID,
+          email: user.Email,
+          role: user.Role,
+        },
+        process.env.SECRET_KEY,
+        { expiresIn: '1h' }
+      );
+
+      // Kirim response sukses
+      res.status(200).json({
+        message: "Login successful",
+        token: token,
+      });
+    });
+  });
+};
+
+module.exports = { registerUser, loginUser };
+
+
