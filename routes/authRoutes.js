@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { registerUser, loginUser } = require('../controllers/authController');
 const { verifyToken } = require('../middleware/authMiddleware');
+const upload = require('../services/uploadService');
+
 
 // Endpoint Register User
 router.post('/register', registerUser);
@@ -14,6 +16,17 @@ router.get('/profile', verifyToken, (req, res) => {
   res.status(200).json({
     message: "Profile data fetched successfully",
     user: req.user  // Data ini berasal dari payload JWT
+  });
+});
+
+// Endpoint Upload Gambar
+router.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded or wrong format" });
+  }
+  res.status(200).json({
+    message: "File uploaded successfully",
+    imageUrl: `/uploads/${req.file.filename}`
   });
 });
 
