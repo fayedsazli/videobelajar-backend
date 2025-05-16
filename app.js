@@ -12,6 +12,8 @@ app.use(express.json());
 app.use(express.json());
 app.use('/api', authRoutes);
 
+app.use('/uploads', express.static('uploads'));
+
 // Database Connection
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
