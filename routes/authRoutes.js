@@ -17,4 +17,26 @@ router.get('/profile', verifyToken, (req, res) => {
   });
 });
 
+// Verify Email
+router.get('/verify-email', (req, res) => {
+  const { token } = req.query;
+
+  const query = `SELECT * FROM user WHERE VerificationToken = ?`;
+  db.query(query, [token], (err, results) => {
+    if (err) return res.status(500).json({ message: "Database error", error: err });
+
+    if (results.length === 0) {
+      return res.status(400).json({ message: "Invalid Verification Token" });
+    }
+
+    const updateQuery = `UPDATE user SET IsVerified = 1, VerificationToken = NULL WHERE VerificationToken = ?`;
+    db.query(updateQuery, [token], (err, updateResult) => {
+      if (err) return res.status(500).json({ message: "Database error", error: err });
+
+      res.status(200).json({ message: "Email Verified Successfully" });
+    });
+  });
+});
+
+
 module.exports = router;

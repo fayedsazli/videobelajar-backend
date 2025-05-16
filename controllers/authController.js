@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+const { sendVerificationEmail } = require('../services/emailService');
 require('dotenv').config();
 
 // Koneksi Database
@@ -11,6 +13,7 @@ const db = mysql.createConnection({
   database: process.env.DB_DATABASE,
 });
 
+// Register User
 // Register User
 const registerUser = (req, res) => {
   const { Nama, Email, Password, No_Hp, Role } = req.body;
@@ -28,16 +31,25 @@ const registerUser = (req, res) => {
     bcrypt.hash(Password, 10, (err, hashedPassword) => {
       if (err) return res.status(500).json({ message: "Hashing error", error: err });
 
+      // Generate Verification Token
+      const verificationToken = uuidv4();
+
       // Insert ke database
-      const insertQuery = `INSERT INTO user (Nama, Email, Password, No_Hp, Role, Created_at, Updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())`;
-      db.query(insertQuery, [Nama, Email, hashedPassword, No_Hp, Role], (err, result) => {
+      const insertQuery = `INSERT INTO user (Nama, Email, Password, No_Hp, Role, VerificationToken, Created_at, Updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`;
+      db.query(insertQuery, [Nama, Email, hashedPassword, No_Hp, Role, verificationToken], (err, result) => {
         if (err) return res.status(500).json({ message: "Failed to register user", error: err });
 
-        res.status(201).json({ message: "User registered successfully" });
+        // Kirim Email Verifikasi
+        sendVerificationEmail(Email, verificationToken);
+
+        res.status(201).json({ 
+          message: "User registered successfully. Please check your email for verification link." 
+        });
       });
     });
   });
 };
+
 // Login User
 const loginUser = (req, res) => {
   const { Email, Password } = req.body;
